@@ -7,7 +7,7 @@ const { readDB, writeDB } = require("../lib/utilities");
 const router = express.Router();
 
 const cartsFilePath = path.join(__dirname, "carts.json");
-const productsFilePath = path.join(__dirname, "./products/products.json");
+const productsFilePath = path.join(__dirname, "../products/products.json");
 
 router.get("/", async (req, res, next) => {
   try {
@@ -30,6 +30,9 @@ router.get("/:cartID", async (req, res, next) => {
   try {
     const cartDB = await readDB(cartsFilePath);
     const selectedCart = cartDB.findIndex(
+      //trying out findIndex.
+      //It returns the index of the first element that matches the requirement.
+      //In this case, the cart ID
       (cart) => cart._id === req.params.cartID
     );
     if (selectedCart !== -1) {
@@ -63,6 +66,9 @@ router.post(
     } else {
       const cartDB = await readDB(cartsFilePath);
       const newCart = { ...req.body, _id: uniqid(), products: [], total: 0 };
+      //This is shorthand creation of an object.
+      // ...req.body copies all the prop/key pairs from thr body of the request
+      // the others are making new prop/key pairs as you know
       cartDB.push(newCart);
       await writeDB(cartsFilePath, cartDB);
       res.status(201).send(cartDB);
@@ -78,9 +84,20 @@ router.put("/:cartID/add-to-cart/:productID", async (req, res, next) => {
         (cart) => cart._id === req.params.cartID
       );
       if (selectedCart !== -1) {
-        cartDB[selectedCart].products.push(req.params.productID);
-        await writeDB(cartsFilePath, cartDB);
-        res.status(201).send(cartDB);
+        const productDB = await readDB(productsFilePath);
+        const selectedProduct = productDB.filter(
+          (product) => product._id === req.params.productID
+        );
+        if (selectedProduct.length > 0) {
+          cartDB[selectedCart].products.push(selectedProduct[0]);
+          cartDB[selectedCart].total += selectedProduct[0].price;
+          await writeDB(cartsFilePath, cartDB);
+          res.status(201).send(cartDB);
+        } else {
+          err.httpStatusCode = 404;
+          err.message = "There is no product with that ID dood";
+          next(err);
+        }
       } else {
         const err = {};
         err.httpStatusCode = 404;
