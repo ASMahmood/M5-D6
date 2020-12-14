@@ -7,6 +7,7 @@ const { readDB, writeDB } = require("../lib/utilities");
 const router = express.Router();
 
 const cartsFilePath = path.join(__dirname, "carts.json");
+const productsFilePath = path.join(__dirname, "./products/products.json");
 
 router.get("/", async (req, res, next) => {
   try {
@@ -68,5 +69,33 @@ router.post(
     }
   }
 );
+
+router.put("/:cartID/add-to-cart/:productID", async (req, res, next) => {
+  try {
+    const cartDB = await readDB(cartsFilePath);
+    if (cartDB.length > 0) {
+      const selectedCart = cartDB.findIndex(
+        (cart) => cart._id === req.params.cartID
+      );
+      if (selectedCart !== -1) {
+        cartDB[selectedCart].products.push(req.params.productID);
+        await writeDB(cartsFilePath, cartDB);
+        res.status(201).send(cartDB);
+      } else {
+        const err = {};
+        err.httpStatusCode = 404;
+        err.message = "There is no cart with that ID dood";
+        next(err);
+      }
+    } else {
+      const err = {};
+      err.httpStatusCode = 404;
+      err.message = "The cart database is empty dood";
+      next(err);
+    }
+  } catch (err) {
+    next(err);
+  }
+});
 
 module.exports = router;
