@@ -98,4 +98,38 @@ router.put("/:cartID/add-to-cart/:productID", async (req, res, next) => {
   }
 });
 
+router.delete(
+  "/:cartID/remove-from-cart/:productID",
+  async (req, res, next) => {
+    try {
+      const cartDB = await readDB(cartsFilePath);
+      if (cartDB.length > 0) {
+        const selectedCart = cartDB.findIndex(
+          (cart) => cart._id === req.params.cartID
+        );
+        if (selectedCart !== -1) {
+          const alteredProducts = cartDB[selectedCart].products.filter(
+            (product) => product !== req.params.productID
+          );
+          cartDB[selectedCart].products = alteredProducts;
+          await writeDB(cartsFilePath, cartDB);
+          res.status(201).send(cartDB);
+        } else {
+          const err = {};
+          err.httpStatusCode = 404;
+          err.message = "There is no cart with that ID dood";
+          next(err);
+        }
+      } else {
+        const err = {};
+        err.httpStatusCode = 404;
+        err.message = "The cart database is empty dood";
+        next(err);
+      }
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 module.exports = router;
