@@ -25,6 +25,26 @@ router.get("/", async (req, res, next) => {
   }
 });
 
+router.get("/:cartID", async (req, res, next) => {
+  try {
+    const cartDB = await readDB(cartsFilePath);
+    const selectedCart = cartDB.findIndex(
+      (cart) => cart._id === req.params.cartID
+    );
+    if (selectedCart !== -1) {
+      res.status(201).send(cartDB[selectedCart]);
+    } else {
+      const err = {};
+      err.httpStatusCode = 404;
+      err.message = "There is no cart with that ID dood";
+      next(err);
+    }
+  } catch (err) {
+    err.httpStatueCode = 404;
+    next(err);
+  }
+});
+
 router.post(
   "/",
   [
