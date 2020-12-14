@@ -1,5 +1,5 @@
 const express = require("express");
-const reviewsRoutes = require("./reviews");
+const cartsRoutes = require("./carts");
 const fileRoutes = require("./files/upload");
 const productsRouter = require("./products");
 const cors = require("cors");
@@ -24,7 +24,7 @@ server.use(
 );
 
 server.use("/products", productsRouter);
-
+server.use("/carts", cartsRoutes);
 server.use("/files", fileRoutes);
 
 server.use(notFoundHandler);
