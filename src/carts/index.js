@@ -36,6 +36,7 @@ router.get("/:cartID", async (req, res, next) => {
       (cart) => cart._id === req.params.cartID
     );
     if (selectedCart !== -1) {
+      //If findIndex cant find a match, it will return -1
       res.status(201).send(cartDB[selectedCart]);
     } else {
       const err = {};
@@ -81,16 +82,20 @@ router.put("/:cartID/add-to-cart/:productID", async (req, res, next) => {
     const cartDB = await readDB(cartsFilePath);
     if (cartDB.length > 0) {
       const selectedCart = cartDB.findIndex(
+        //Using find index to get the index of the element(cart) we want to change
         (cart) => cart._id === req.params.cartID
       );
       if (selectedCart !== -1) {
         const productDB = await readDB(productsFilePath);
         const selectedProduct = productDB.filter(
+          //Getting the product object of the product we want to add to the cart
           (product) => product._id === req.params.productID
         );
         if (selectedProduct.length > 0) {
           cartDB[selectedCart].products.push(selectedProduct[0]);
+          //Adds the product object to the cart. We have to use the [0] because .filter returns an array even if there is only one objject inside it
           cartDB[selectedCart].total += selectedProduct[0].price;
+          //Changing the total price of cart to reflect the value added by the product
           await writeDB(cartsFilePath, cartDB);
           res.status(201).send(cartDB);
         } else {
@@ -126,9 +131,14 @@ router.delete(
         );
         if (selectedCart !== -1) {
           const alteredProducts = cartDB[selectedCart].products.filter(
-            (product) => product !== req.params.productID
-          );
+            (product) => product._id !== req.params.productID
+          ); //Getting a copy of the cart products WITHOUT the selected product
+          const selectedProduct = cartDB[selectedCart].products.filter(
+            (product) => product._id === req.params.productID
+          ); //Getting a copy of the cart products WITH ONLY the selected product
           cartDB[selectedCart].products = alteredProducts;
+          cartDB[selectedCart].total =
+            cartDB[selectedCart].total - selectedProduct[0].price;
           await writeDB(cartsFilePath, cartDB);
           res.status(201).send(cartDB);
         } else {
